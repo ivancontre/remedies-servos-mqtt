@@ -12,39 +12,39 @@ PubSubClient client(espClient);
 
 // Servos init
 Servo servoMondayA;
-const int pinServoMondayA = 12;
+const int pinServoMondayA = 22;
 Servo servoMondayB;
-const int pinServoMondayB = 13;
+const int pinServoMondayB = 21;
 
 Servo servoTuesdayA;
-const int pinServoTuesdayA = 14;
+const int pinServoTuesdayA = 19;
 Servo servoTuesdayB;
-const int pinServoTuesdayB = 27;
+const int pinServoTuesdayB = 18;
 
 Servo servoWednesdayA;
-const int pinServoWednesdayA = 26;
+const int pinServoWednesdayA = 17;
 Servo servoWednesdayB;
-const int pinServoWednesdayB = 23; //25
+const int pinServoWednesdayB = 16; //25
 
 Servo servoThursdayA;
-const int pinServoThursdayA = 33;
+const int pinServoThursdayA = 32;
 Servo servoThursdayB;
-const int pinServoThursdayB = 32;
+const int pinServoThursdayB = 33;
 
 Servo servoFridayA;
-const int pinServoFridayA = 16;
+const int pinServoFridayA = 23;
 Servo servoFridayB;
-const int pinServoFridayB = 17;
+const int pinServoFridayB = 26;
 
 Servo servoSaturdayA;
-const int pinServoSaturdayA = 18;
+const int pinServoSaturdayA = 27;
 Servo servoSaturdayB;
-const int pinServoSaturdayB = 19;
+const int pinServoSaturdayB = 14;
 
 Servo servoSundayA;
-const int pinServoSundayA = 21;
+const int pinServoSundayA = 13;
 Servo servoSundayB;
-const int pinServoSundayB = 22;
+const int pinServoSundayB = 12;
 
 const int pinLedWifi = 4;
 const int pinLedMqtt = 5;
@@ -55,13 +55,14 @@ void setup() {
   pinMode(pinLedWifi, OUTPUT);
   pinMode(pinLedMqtt, OUTPUT);
 
-  connectWifi();  
-
-  connectMqtt(); 
-
   attachServos();
 
+  connectWifi();  
+
   getStatus();
+
+  connectMqtt();
+  
 }
 
 void loop() {
@@ -76,6 +77,7 @@ void loop() {
 
 void connectWifi() {
   // connecting to a WiFi network
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
      delay(500);
@@ -88,13 +90,34 @@ void connectWifi() {
   Serial.println("Connected to the WiFi network");
 }
 
+String generarStringAleatorio(int longitud) {
+    // Caracteres posibles en el string aleatorio
+    const char caracteresPosibles[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+    int i;
+    int maximoIndice = sizeof(caracteresPosibles) - 1;
+
+    // Inicializar la semilla para los números aleatorios
+    randomSeed(analogRead(0));
+
+    // Crear un objeto String para almacenar el string aleatorio
+    String stringAleatorio = "";
+
+    // Generar el string aleatorio
+    for (i = 0; i < longitud; ++i) {
+        int indiceAleatorio = random(0, maximoIndice);
+        stringAleatorio += caracteresPosibles[indiceAleatorio];
+    }
+
+    return stringAleatorio;
+}
+
 void connectMqtt() {
     //connecting to a mqtt broker
    client.setServer(mqtt_broker, mqtt_port);
    client.setCallback(callback);
    while (!client.connected()) {
-       String client_id = "esp32-client-";
-       client_id += String(WiFi.macAddress());
+       String client_id = idEsp32;
        Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
        if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
           digitalWrite(pinLedMqtt, HIGH);
@@ -116,8 +139,7 @@ void connectMqtt() {
 void reconnect() {
   while (!client.connected()) {
     Serial.print("Intentando reconectarse MQTT...");
-    String client_id = "esp32-client-";
-    client_id += String(WiFi.macAddress());
+    String client_id = idEsp32;
     Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
     if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
       digitalWrite(pinLedMqtt, HIGH);
